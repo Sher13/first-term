@@ -30,7 +30,7 @@ _start:
 ; result:
 ;    mul is written to r13
 ; just registors:
-;    r11 - buffer, r9 - links for rdi(changes), r8 - counter 
+;    r11 - buffer, r9 - links for rdi(changes), r8 - counter
 mul_long_long:
 		push		r13
 		push		rdi
