@@ -23,7 +23,14 @@ _start:
 
                 jmp             exit
 
-; r13 - rez
+; mul two long number
+;    rdi -- address of factor #1 (long number)
+;    rsi -- address of factor #2 (long number)
+;    rcx -- length of long numbers in qwords
+; result:
+;    mul is written to r13
+; just registors:
+;    r11 - buffer, r9 - links for rdi(changes), r8 - counter 
 mul_long_long:
 		push		r13
 		push		rdi
@@ -57,7 +64,8 @@ mul_long_long:
 		pop		r13
 		ret
 
-;r11 = r12
+; copy long long number
+; copy r12 to r11 (long long)
 copy:
 		push		rcx
 		push		r11
@@ -79,13 +87,13 @@ copy:
 		ret
 
 
-;r13 += r11
+
 ; adds two long number
-;    rdi -- address of summand #1 (long number)
-;    rsi -- address of summand #2 (long number)
+;    r13 -- address of summand #1 (long number)
+;    r11 -- address of summand #2 (long number)
 ;    rcx -- length of long numbers in qwords
 ; result:
-;    sum is written to rdi
+;    sum is written to r13
 add_long_long:
                 push            r13
                 push            r11
