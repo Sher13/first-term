@@ -1,4 +1,4 @@
-                section         .text
+      section         .text
 
                 global          _start
 _start:
@@ -44,6 +44,13 @@ add_long_long:
                 pop             rdi
                 ret
 
+
+; subtraction two long number
+;    rdi -- subtrahend (long number)
+;    rsi -- minuend (long number)
+;    rcx -- length of long numbers in qwords
+; result:
+;    sub is written to rsi (swap links)
 sub_long_long:
 		push		rsi
 		push		rdi
@@ -52,7 +59,7 @@ sub_long_long:
 .loop:
 		mov		rax, [rdi]
 		lea		rdi, [rdi + 8]
-		sub		[rsi], rax
+		sbb		[rsi], rax
 		lea		rsi, [rsi + 8]
 		dec		rcx
 		jnz		.loop
