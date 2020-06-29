@@ -3,13 +3,13 @@
                 global          _start
 _start:
 
-                sub             rsp, 6 * 128 * 8
-                lea             rdi, [rsp + 128 * 8]
-                mov             rcx, 128
-                call            read_long
-                mov             rdi, rsp
-                call            read_long
-                lea             rsi, [rsp + 128 * 8]
+		sub             rsp, 6 * 128 * 8
+		lea             rdi, [rsp + 128 * 8]
+		mov             rcx, 128
+		call            read_long
+		mov             rdi, rsp
+		call            read_long
+		lea             rsi, [rsp + 128 * 8]
 		lea		r11, [rsp + 3 * 128 * 8]
 		lea		r13, [rsp + 5 * 128 * 8]
 		mov		rsp, r13
@@ -17,11 +17,11 @@ _start:
 
 		mov		rdi, r13
 		mov		rcx, 256
-                call            write_long
-                mov             al, 0x0a
-                call            write_char
+		call            write_long
+		mov             al, 0x0a
+		call            write_char
 
-                jmp             exit
+		jmp             exit
 
 ; mul two long number
 ;    rdi -- address of factor #1 (long number)
@@ -113,24 +113,6 @@ add_long_long:
                 pop             r11
                 pop             r13
                 ret
-
-sub_long_long:
-		push		rsi
-		push		rdi
-		push		rcx
-
-.loop:
-		mov		rax, [rdi]
-		lea		rdi, [rdi + 8]
-		sub		[rsi], rax
-		lea		rsi, [rsi + 8]
-		dec		rcx
-		jnz		.loop
-
-		pop		rcx
-		pop		rsi
-		pop		rdi
-		ret
 
 ; adds 64-bit number to long number
 ;    rdi -- address of summand #1 (long number)
