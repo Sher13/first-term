@@ -16,7 +16,7 @@ _start:
 		call            mul_long_long
 
 		mov		rdi, r13
-		mov		rcx, 256
+		add		rcx, rcx
 		call            write_long
 		mov             al, 0x0a
 		call            write_char
@@ -38,7 +38,7 @@ mul_long_long:
 
 		push		rdi
 		push		rcx
-		mov		rcx, 256
+		add		rcx, rcx
 		mov		rdi, r13
 		call		set_zero
 		pop		rcx
@@ -47,13 +47,14 @@ mul_long_long:
 		mov		r9, rdi
 		mov		r12, rsi
 		mov		r8, rcx
-		mov		rcx, 129
 .loop:
 		call		copy
 		mov		rbx, [r9]
 		mov		rdi, r11
+		inc		rcx
 		call		mul_long_short
 		call		add_long_long
+		dec		rcx
 		lea		r13, [r13 + 8]
 		lea		r9, [r9 + 8]
 		dec		r8
@@ -67,10 +68,17 @@ mul_long_long:
 
 ; copy long long number
 ; copy r12 to r11 (long long)
+; rcx - size in qword
 copy:
 		push		rcx
 		push		r11
 		push		r12
+		push		rdi
+		inc		rcx
+		mov		rdi, r11
+		call		set_zero
+		dec		rcx
+		pop		rdi
 
 .loop:
 		mov		rax, [r12]
