@@ -69,6 +69,9 @@ mul_long_long:
 ; copy long long number
 ; copy r12 to r11 (long long)
 ; rcx - size in qword
+; result:
+;  r11 = r12
+;  (rcx+1)st qwords in r11 == 0
 copy:
 		push		rcx
 		push		r11
