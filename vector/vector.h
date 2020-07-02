@@ -136,7 +136,7 @@ struct vector {
     iterator insert(iterator pos, T const &val) {
         ptrdiff_t ind = pos - begin();
         push_back(val);
-        for (size_t i = size_ - 1; i > ind; i--) {
+        for(size_t i = size_ - 1; i > ind; i--) {
             std::swap(data_[i], data_[i - 1]);
         }
         return ind + data_;
@@ -157,7 +157,7 @@ struct vector {
     iterator erase(iterator first, iterator last) {
         ptrdiff_t ind = first - begin();
         ptrdiff_t n = last - first;
-        for (size_t i = ind; i < size_ - n; i++) {
+        for(size_t i = ind; i < size_ - n; i++) {
             std::swap(data_[i], data_[i + n]);
         }
         delete_(n);
@@ -188,13 +188,13 @@ private:
         }
         size_t size = 0;
         try {
-            for (size_t i = 0; i < new_size; i++) {
+            for(size_t i = 0; i < new_size; i++) {
                 T x = from[i];
                 new(to + i) T(x);
                 size++;
             }
         } catch (...) {
-            while (size) {
+            while(size) {
                 to[size - 1].~T();
                 size--;
             }
@@ -205,7 +205,7 @@ private:
     }
 
     void delete_(size_t n) {
-        for (size_t i = 0; i < n; i++) {
+        for(size_t i = 0; i < n; i++) {
             data_[size_ - i - 1].~T();
         }
     }
