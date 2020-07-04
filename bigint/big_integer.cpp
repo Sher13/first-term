@@ -94,6 +94,20 @@ std::pair<big_integer, big_integer> big_integer::div_little(big_integer a, big_i
     return std::make_pair(rez, rem);
 }
 
+void big_integer::mul_little(big_integer b) {
+    unsigned long long b1 = b.digits[0];
+    digits.push_back(0);
+    unsigned long long carry = 0;
+    for (size_t i = 0; i < digits.size()-1; i++) {
+        unsigned long long x = (unsigned long long)digits[i]*b1 + carry;
+        digits[i] = x % radix;
+        carry = x / radix;
+    }
+    digits.back() = carry;
+    sign = sign ^ b.sign;
+    (*this).norm();
+}
+
 std::pair<big_integer, big_integer> big_integer::div_(big_integer a, big_integer b) {
     //  a < b
     if (flags(abs_(a), abs_(b)) == 1) {
@@ -238,6 +252,10 @@ big_integer &big_integer::operator-=(big_integer const &rhs) {
 big_integer &big_integer::operator*=(big_integer const &rhs) {
     if (rhs.digits.empty()) {
         *this = rhs;
+        return *this;
+    }
+    if (rhs.digits.size() == 1) {
+        (*this).mul_little(rhs);
         return *this;
     }
     big_integer a;

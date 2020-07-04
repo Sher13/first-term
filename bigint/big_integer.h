@@ -54,6 +54,7 @@ private:
     void bitToTwo();
     void twoToBit();
     std::pair <big_integer, big_integer> div_little(big_integer a, big_integer b);
+    void mul_little(big_integer b);
     std::pair <big_integer, big_integer> div_(big_integer a, big_integer b);
 };
 
