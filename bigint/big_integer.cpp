@@ -1,6 +1,7 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include "big_integer.h"
 
 typedef unsigned __int128 uint128_t;
@@ -117,8 +118,8 @@ std::pair<big_integer, big_integer> big_integer::div_(big_integer a, big_integer
         return div_little(a, b); // I'm write it later....
     }
     unsigned int f = radix / (b.digits.back() + 1);
-    a *= f;
-    b *= f;
+    a.mul_little(f);
+    b.mul_little(f);
     a.digits.push_back(0);
     big_integer rez;
     size_t x = b.digits.size()-1;
@@ -134,7 +135,8 @@ std::pair<big_integer, big_integer> big_integer::div_(big_integer a, big_integer
         uint128_t a3 = (uint128_t)a.digits[x] * radix * radix + (uint128_t)a.digits[x-1] * radix + (uint128_t)a.digits[x-2];
         unsigned int d = a3 / b2;
         unsigned int d1 = std::min(d, UINT32_MAX);
-        big_integer c = b * d1;
+        big_integer c = b;
+        c.mul_little(d1);
         a.norm();
         if (flags(a, c) == 1) {
             d1--;
@@ -171,7 +173,7 @@ big_integer::big_integer(int a) {
     if (a < 0)
         sign = true;
     long b = a;
-    b = fabs(b);
+    b = std::abs(b);
     digits.push_back(b);
     (*this).norm();
 };
@@ -181,8 +183,9 @@ big_integer::big_integer(unsigned int a) {
     digits.push_back(a);
 };
 
-big_integer::big_integer(const std::string &str) {
-    big_integer a;
+big_integer::big_integer(const std::string &str)
+        :big_integer()
+{
     int st = 0;
     bool fl = false;
     if (str[0] == '-') {
@@ -190,12 +193,20 @@ big_integer::big_integer(const std::string &str) {
         st++;
     }
     for(size_t i = st; i < str.size(); i++) {
-        a *= 10;
-        a += (str[i] - '0');
+        size_t j = i;
+        unsigned int x = 0;
+        unsigned int st10 = 1;
+        while(j-i < 9 && j < str.size()) {
+            x = x*10 + (str[j]-'0');
+            j++;
+            st10*=10;
+        }
+        i = j-1;
+        (*this).mul_little(st10);
+        (*this) += x;
     }
-    a.sign = fl;
-    a.norm();
-    *this = a;
+    sign = fl;
+    (*this).norm();
 }
 
 big_integer &big_integer::operator=(big_integer const &other) {
@@ -228,7 +239,7 @@ big_integer &big_integer::operator+=(big_integer const &rhs) {
             }
         }
         a.norm();
-        *this = a;
+        swap(a, *this);
         return *this;
     } else {
         a.digits.resize(a.digits.size() + 1);
@@ -239,7 +250,7 @@ big_integer &big_integer::operator+=(big_integer const &rhs) {
         }
         a.sign = sign;
         a.norm();
-        *this = a;
+        swap(a, *this);
         return *this;
     }
 };
@@ -260,35 +271,28 @@ big_integer &big_integer::operator*=(big_integer const &rhs) {
     }
     big_integer a;
     a.digits.resize(this->digits.size() + rhs.digits.size() + 2);
-    if (this->sign != rhs.sign) {
-        a.sign = true;
-    } else {
-        a.sign = false;
+    for (size_t i = 0; i < digits.size(); i++) {
+        big_integer b(rhs);
+        b.sign = false;
+        b.mul_little(digits[i]);
+        b.digits.insert(b.digits.begin(), i, 0);
+        a += b;
     }
-    for(size_t i = 0; i < this->digits.size(); i++) {
-        for(size_t j = 0; j < rhs.digits.size(); j++) {
-            uint128_t x = (uint128_t) (this->digits[i]) * (uint128_t) (rhs.digits[j]) + (uint128_t)(a.digits[i+j]);
-            a.digits[i + j] = x % radix;
-            x = x / radix + a.digits[i + j + 1];
-            a.digits[i + j + 1] = x % radix;
-            x = x/radix + a.digits[i + j + 2];
-            a.digits[i + j + 2] = x % radix;
-        }
-    }
+    a.sign = sign ^ rhs.sign;
     a.norm();
-    *this = a;
+    swap(a, *this);
     return *this;
 };
 
 big_integer &big_integer::operator/=(big_integer const &rhs) {
     auto rez = div_((*this), rhs);
-    *this = rez.first;
+    swap(rez.first, *this);
     return *this;
 }
 
 big_integer &big_integer::operator%=(big_integer const &rhs) {
     auto rez = div_((*this), rhs);
-    *this = rez.second;
+    swap(rez.second, *this);
     return *this;
 }
 
@@ -405,7 +409,7 @@ std::string to_string(big_integer const &a) {
     b.digits.push_back(0);
     b.sign = false;
     while(!b.digits.empty()) {
-        auto x = b.div_(b, 10);
+        auto x = b.div_little(b, 10);
         b = x.first;
         if (x.second.digits.empty()) {
             x.second.digits.push_back(0);
@@ -422,6 +426,11 @@ std::string to_string(big_integer const &a) {
     return s;
 }
 
+void big_integer::swap(big_integer& a, big_integer& b) {
+    using std::swap;
+    swap(a.sign, b.sign);
+    swap(a.digits, b.digits);
+}
 
 big_integer operator+(big_integer a, big_integer const &b) {
     return a += b;
@@ -480,7 +489,7 @@ bool operator>(big_integer const &a, big_integer const &b) {
 
 bool operator!=(big_integer const &a, big_integer const &b) {
     int f = flags(a, b);
-    return !(f == 0);
+    return f != 0;
 };
 
 bool operator<=(big_integer const &a, big_integer const &b) {
@@ -497,3 +506,14 @@ std::ostream &operator<<(std::ostream &cout_, big_integer const &a) {
     cout_ << to_string(a);
     return cout_;
 }
+
+
+
+
+
+
+
+
+
+
+
