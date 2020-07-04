@@ -152,6 +152,7 @@ std::pair<big_integer, big_integer> big_integer::div_(big_integer a, big_integer
     if (a_sign != b_sign) {
         rez.sign = true;
     }
+    a.sign = a_sign;
     reverse(rez.digits.begin(), rez.digits.end());
     rez.norm();
     a = div_little(a, f).first;
@@ -506,8 +507,6 @@ std::ostream &operator<<(std::ostream &cout_, big_integer const &a) {
     cout_ << to_string(a);
     return cout_;
 }
-
-
 
 
 
