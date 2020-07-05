@@ -218,42 +218,41 @@ big_integer &big_integer::operator=(big_integer const &other) {
 };
 
 big_integer &big_integer::operator+=(big_integer const &rhs) {
-    digits.resize(std::max(digits.size(), rhs.digits.size()) + 1);
-    big_integer a;
-    a.digits.resize(this->digits.size());
+    size_t mx = std::max(rhs.digits.size(), digits.size()) + 1;
+    digits.resize(mx);
     big_integer b(rhs);
-    b.digits.resize(this->digits.size());
-    if (this->sign != rhs.sign) {
-        if (abs_(*this) < abs_(b)) {
-            big_integer c(*this);
-            *this = b;
-            b = c;
+    b.digits.resize(mx);
+    if (sign != b.sign) {
+        bool a_sign = sign;
+        bool b_sign = b.sign;
+        sign = false;
+        b.sign = false;
+        if (*this < b) {
+            swap(*this, b);
+            std::swap(a_sign, b_sign);
         }
-        a.sign = this->sign;
-        for(size_t i = 0; i < a.digits.size() - 1; i++) {
-            if (this->digits[i] >= b.digits[i])
-                a.digits[i] += this->digits[i] - b.digits[i];
-            else {
-                long long x = radix - b.digits[i] + this->digits[i];
-                b.digits[i+1]++;
-                a.digits[i] = x;
+        long long borrow = 0;
+        for (size_t i = 0; i < mx; i++) {
+            if ((long long)digits[i] >= (long long)b.digits[i] + borrow) {
+                digits[i] = digits[i] - b.digits[i] - borrow;
+                borrow = 0;
+            } else {
+                unsigned long long x = digits[i] + radix - b.digits[i] - borrow;
+                digits[i] = x;
+                borrow = 1;
             }
         }
-        a.norm();
-        swap(a, *this);
-        return *this;
+        sign = a_sign;
     } else {
-        a.digits.resize(a.digits.size() + 1);
-        for(size_t i = 0; i < this->digits.size(); i++) {
-            long long c = (long long) this->digits[i] + (long long) b.digits[i] + (long long) a.digits[i];
-            a.digits[i] = c % radix;
-            a.digits[i + 1] += c / radix;
+        long long carry = 0;
+        for(size_t i = 0; i < mx; i++) {
+            long long x = (long long)digits[i] + (long long)b.digits[i] + carry;
+            digits[i] = x % radix;
+            carry = x / radix;
         }
-        a.sign = sign;
-        a.norm();
-        swap(a, *this);
-        return *this;
     }
+    (*this).norm();
+    return (*this);
 };
 
 
@@ -511,7 +510,6 @@ std::ostream &operator<<(std::ostream &cout_, big_integer const &a) {
     cout_ << to_string(a);
     return cout_;
 }
-
 
 
 
