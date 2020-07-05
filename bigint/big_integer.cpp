@@ -132,7 +132,8 @@ std::pair<big_integer, big_integer> big_integer::div_(big_integer const &aa, big
                        (uint128_t) a.digits[x - 2];
         unsigned int d = a3 / b2;
         unsigned int q = std::min((unsigned int) d, UINT32_MAX);
-        c = b * q;
+        c = b;
+        c.mul_little(q);
         a.norm();
         if (a < c) {
             q--;
@@ -141,7 +142,7 @@ std::pair<big_integer, big_integer> big_integer::div_(big_integer const &aa, big
         rez.digits.push_back(q);
         b.digits.erase(b.digits.begin());
         a -= c;
-        if (a == 0)
+        if (a.digits.empty())
             break;
         if (a.digits.size() < b.digits.size() + 1) {
             a.digits.insert(a.digits.end(), b.digits.size() - a.digits.size() + 1, 0);
@@ -260,12 +261,18 @@ big_integer &big_integer::operator-=(big_integer const &rhs) {
 };
 
 big_integer &big_integer::operator*=(big_integer const &rhs) {
-    if (rhs.digits.empty()) {
+    if (rhs.digits.empty() || digits.empty()) {
         *this = rhs;
         return *this;
     }
     if (rhs.digits.size() == 1) {
         (*this).mul_little(rhs);
+        return *this;
+    }
+    if (digits.size() == 1) {
+        big_integer c(rhs);
+        c.mul_little(*this);
+        swap(c, *this);
         return *this;
     }
     big_integer a;
