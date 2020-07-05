@@ -68,6 +68,7 @@ void big_integer::twoToBit() {
     sign = true;
 }
 
+// a = a/b, return a % b
 unsigned int big_integer::div_little(unsigned int b) {
     unsigned long long x = 0;
     for(int i = digits.size() - 1; i >= 0; i--) {
@@ -92,58 +93,59 @@ void big_integer::mul_little(big_integer const &b) {
     sign = sign ^ b.sign;
     (*this).norm();
 }
-
-std::pair<big_integer, big_integer> big_integer::div_(big_integer const &aa, big_integer const &bb) {
-    big_integer a(aa);
+// a = a % bb, return a / bb
+big_integer big_integer::div_(big_integer const &bb) {
     big_integer b(bb);
-    a.sign = false;
+    bool a_sign = sign;
+    sign = false;
     b.sign = false;
-    if (a < b) {
-        a.sign = aa.sign;
-        return std::make_pair(0, a);
+    if ((*this) < b) {
+        sign = a_sign;
+        return 0;
     }
     if (b.digits.size() == 1) {
-        a.sign = aa.sign ^ bb.sign;
-        big_integer rez(a.div_little(bb.digits[0]));
-        rez.sign = aa.sign;
+        sign = a_sign ^ bb.sign;
+        big_integer rez((*this).div_little(bb.digits[0]));
+        rez.sign = a_sign;
         rez.norm();
-        return std::make_pair(a, rez);
+        swap(rez, (*this));
+        return rez;
     }
     unsigned int f = radix / (b.digits.back() + 1);
-    a.mul_little(f);
+    (*this).mul_little(f);
     b.mul_little(f);
-    a.digits.push_back(0);
+    digits.push_back(0);
     uint128_t b2 = b.digits.back() * radix + b.digits[b.digits.size() - 2];
     big_integer rez;
     size_t b_size = b.digits.size();
-    b.digits.insert(b.digits.begin(), a.digits.size() - b_size - 1, 0);
+    b.digits.insert(b.digits.begin(), digits.size() - b_size - 1, 0);
     big_integer c;
     while(b.digits.size() >= b_size) {
-        size_t x = a.digits.size() - 1;
-        uint128_t a3 = (uint128_t) a.digits[x] * radix * radix + (uint128_t) a.digits[x - 1] * radix +
-                       (uint128_t) a.digits[x - 2];
+        size_t x = digits.size() - 1;
+        uint128_t a3 = (uint128_t) digits[x] * radix * radix + (uint128_t) digits[x - 1] * radix +
+                       (uint128_t) digits[x - 2];
         unsigned int d = a3 / b2;
         unsigned int q = std::min((unsigned int) d, UINT32_MAX);
         c = b;
         c.mul_little(q);
-        a.norm();
-        if (a < c) {
+        (*this).norm();
+        if ((*this) < c) {
             q--;
             c -= b;
         }
         rez.digits.push_back(q);
         b.digits.erase(b.digits.begin());
-        a -= c;
-        if (a.digits.size() < b.digits.size() + 1) {
-            a.digits.insert(a.digits.end(), b.digits.size() - a.digits.size() + 1, 0);
+        (*this) -= c;
+        if (digits.size() < b.digits.size() + 1) {
+            digits.insert(digits.end(), b.digits.size() - digits.size() + 1, 0);
         }
     }
-    rez.sign = aa.sign ^ bb.sign;
+    rez.sign = a_sign ^ bb.sign;
     reverse(rez.digits.begin(), rez.digits.end());
     rez.norm();
-    a.sign = aa.sign;
-    a.div_little(f);
-    return std::make_pair(rez, a);
+    sign = a_sign;
+    (*this).div_little(f);
+    return rez;
 }
 
 big_integer::big_integer()
@@ -285,14 +287,13 @@ big_integer &big_integer::operator*=(big_integer const &rhs) {
 };
 
 big_integer &big_integer::operator/=(big_integer const &rhs) {
-    auto rez = div_((*this), rhs);
-    swap(rez.first, *this);
+    auto rez = (*this).div_(rhs);
+    swap(rez, (*this));
     return *this;
 }
 
 big_integer &big_integer::operator%=(big_integer const &rhs) {
-    auto rez = div_((*this), rhs);
-    swap(rez.second, *this);
+    (*this).div_(rhs);
     return *this;
 }
 
@@ -401,9 +402,11 @@ big_integer big_integer::operator--(int) {
 };
 
 std::string to_string(big_integer const &a) {
+    if(a.digits.empty()) {
+        return "0";
+    }
     std::string s;
     big_integer b(a);
-    b.digits.push_back(0);
     b.sign = false;
     while(!b.digits.empty()) {
         unsigned int rem = b.div_little(1000000000);
