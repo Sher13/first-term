@@ -39,23 +39,18 @@ int flags(big_integer const &a, big_integer const &b) {
 }
 
 void big_integer::norm() {
-    while(this->digits.size() && this->digits[this->digits.size() - 1] == 0)
-        this->digits.pop_back();
-    if (this->digits.size() == 0)
-        this->sign = false;
-}
-
-big_integer big_integer::abs_(big_integer a) {
-    a.sign = false;
-    return a;
+    while(digits.size() && digits.back() == 0)
+        digits.pop_back();
+    if (digits.size() == 0)
+        sign = false;
 }
 
 // переводит из бита под знак в дополнение до двух
 void big_integer::bitToTwo() {
     if (!sign)
         return;
-    for(size_t i = 0; i < digits.size(); i++) {
-        digits[i] = ~digits[i];
+    for(unsigned int &digit : digits) {
+        digit = ~digit;
     }
     sign = false;
     (*this)++;
@@ -67,14 +62,15 @@ void big_integer::twoToBit() {
     if ((digits.back() & 2147483648) != 2147483648)
         return;
     (*this)--;
-    for(size_t i = 0; i < digits.size(); i++) {
-        digits[i] = ~digits[i];
+    for(unsigned int &digit : digits) {
+        digit = ~digit;
     }
     sign = true;
 }
 
 
-std::pair<big_integer, big_integer> big_integer::div_little(big_integer a, big_integer const &b) {
+std::pair<big_integer, big_integer> big_integer::div_little(big_integer const &aa, big_integer const &b) {
+    big_integer a(aa);
     unsigned int b1 = b.digits[0];
     unsigned long long x = 0;
     big_integer rez;
@@ -109,7 +105,7 @@ void big_integer::mul_little(big_integer const &b) {
     (*this).norm();
 }
 
-std::pair<big_integer, big_integer> big_integer::div_(big_integer const& aa, big_integer const& bb) {
+std::pair<big_integer, big_integer> big_integer::div_(big_integer const &aa, big_integer const &bb) {
     big_integer a(aa);
     big_integer b(bb);
     a.sign = false;
@@ -119,9 +115,7 @@ std::pair<big_integer, big_integer> big_integer::div_(big_integer const& aa, big
         return std::make_pair(0, a);
     }
     if (b.digits.size() == 1) {
-        b.sign = bb.sign;
-        a.sign = aa.sign;
-        return div_little(a, b);
+        return div_little(aa, bb);
     }
     unsigned int f = radix / (b.digits.back() + 1);
     a.mul_little(f);
@@ -138,8 +132,7 @@ std::pair<big_integer, big_integer> big_integer::div_(big_integer const& aa, big
                        (uint128_t) a.digits[x - 2];
         unsigned int d = a3 / b2;
         unsigned int q = std::min((unsigned int) d, UINT32_MAX);
-        c = b;
-        c.mul_little(q);
+        c = b * q;
         a.norm();
         if (a < c) {
             q--;
@@ -168,18 +161,19 @@ big_integer::big_integer(big_integer const &other)
         : sign(other.sign), digits(other.digits) {
 };
 
-big_integer::big_integer(int a) {
-    sign = false;
+big_integer::big_integer(int a)
+        : big_integer() {
     if (a < 0)
         sign = true;
+    if (a == 0)
+        return;
     long b = a;
     b = std::abs(b);
     digits.push_back(b);
-    (*this).norm();
 };
 
-big_integer::big_integer(unsigned int a) {
-    sign = false;
+big_integer::big_integer(unsigned int a)
+        : big_integer() {
     digits.push_back(a);
 };
 
@@ -217,9 +211,9 @@ big_integer &big_integer::operator=(big_integer const &other) {
 big_integer &big_integer::operator+=(big_integer const &rhs) {
     size_t mx = std::max(rhs.digits.size(), digits.size()) + 1;
     digits.resize(mx);
-    big_integer b(rhs);
-    b.digits.resize(mx);
-    if (sign != b.sign) {
+    if (sign != rhs.sign) {
+        big_integer b(rhs);
+        b.digits.resize(mx);
         bool a_sign = sign;
         bool b_sign = b.sign;
         sign = false;
@@ -243,7 +237,10 @@ big_integer &big_integer::operator+=(big_integer const &rhs) {
     } else {
         long long carry = 0;
         for(size_t i = 0; i < mx; i++) {
-            long long x = (long long) digits[i] + (long long) b.digits[i] + carry;
+            long long b = 0;
+            if (i < rhs.digits.size())
+                b = rhs.digits[i];
+            long long x = (long long) digits[i] + (long long) b+ carry;
             digits[i] = x % radix;
             carry = x / radix;
         }
@@ -374,7 +371,7 @@ big_integer big_integer::operator-() const {
 };
 
 big_integer big_integer::operator~() const {
-    return -(*this)-1;
+    return -(*this) - 1;
 }
 
 big_integer &big_integer::operator++() {
