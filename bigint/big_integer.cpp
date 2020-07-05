@@ -80,19 +80,18 @@ unsigned int big_integer::div_little(unsigned int b) {
     return x;
 }
 
-void big_integer::mul_little(big_integer const &b) {
-    unsigned long long b1 = b.digits[0];
+void big_integer::mul_little(unsigned int b) {
     digits.push_back(0);
     unsigned long long carry = 0;
     for(size_t i = 0; i < digits.size() - 1; i++) {
-        unsigned long long x = (unsigned long long) digits[i] * b1 + carry;
+        unsigned long long x = (unsigned long long) digits[i] * b + carry;
         digits[i] = x % radix;
         carry = x / radix;
     }
     digits.back() = carry;
-    sign = sign ^ b.sign;
     (*this).norm();
 }
+
 // a = a % bb, return a / bb
 big_integer big_integer::div_(big_integer const &bb) {
     big_integer b(bb);
@@ -238,7 +237,7 @@ big_integer &big_integer::operator+=(big_integer const &rhs) {
             long long b = 0;
             if (i < rhs.digits.size())
                 b = rhs.digits[i];
-            long long x = (long long) digits[i] + (long long) b+ carry;
+            long long x = (long long) digits[i] + (long long) b + carry;
             digits[i] = x % radix;
             carry = x / radix;
         }
@@ -258,24 +257,26 @@ big_integer &big_integer::operator*=(big_integer const &rhs) {
         return *this;
     }
     if (rhs.digits.size() == 1) {
-        (*this).mul_little(rhs);
+        sign = sign ^ rhs.sign;
+        (*this).mul_little(rhs.digits[0]);
         return *this;
     }
     if (digits.size() == 1) {
         big_integer c(rhs);
-        c.mul_little(*this);
+        c.sign ^= sign;
+        c.mul_little(digits[0]);
         swap(c, *this);
         return *this;
     }
     big_integer a;
     a.digits.resize(this->digits.size() + rhs.digits.size() + 2);
     for(size_t i = 0; i < digits.size(); i++) {
-        for (size_t j = 0; j < rhs.digits.size(); j++) {
+        for(size_t j = 0; j < rhs.digits.size(); j++) {
             unsigned long long x = rhs.digits[j];
             x *= digits[i];
             unsigned long long y = x % radix + a.digits[i + j];
             a.digits[i + j] = y % radix;
-            unsigned long long z = x/radix + y / radix + a.digits[i + j +1];
+            unsigned long long z = x / radix + y / radix + a.digits[i + j + 1];
             a.digits[i + j + 1] = z % radix;
             a.digits[i + j + 2] += z / radix;
         }
@@ -402,7 +403,7 @@ big_integer big_integer::operator--(int) {
 };
 
 std::string to_string(big_integer const &a) {
-    if(a.digits.empty()) {
+    if (a.digits.empty()) {
         return "0";
     }
     std::string s;
@@ -412,7 +413,7 @@ std::string to_string(big_integer const &a) {
         unsigned int rem = b.div_little(1000000000);
         std::string y = std::to_string(rem);
         reverse(y.begin(), y.end());
-        y.insert(y.end(), 9-y.size(), '0');
+        y.insert(y.end(), 9 - y.size(), '0');
         s += y;
     }
     while(s.size() != 1 && s.back() == '0') {
