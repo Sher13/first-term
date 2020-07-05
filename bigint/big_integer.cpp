@@ -218,7 +218,7 @@ big_integer &big_integer::operator=(big_integer const &other) {
 };
 
 big_integer &big_integer::operator+=(big_integer const &rhs) {
-    this->digits.resize(std::max(this->digits.size(), rhs.digits.size()) + 1);
+    digits.resize(std::max(digits.size(), rhs.digits.size()) + 1);
     big_integer a;
     a.digits.resize(this->digits.size());
     big_integer b(rhs);
@@ -393,7 +393,9 @@ big_integer &big_integer::operator++() {
 };
 
 big_integer big_integer::operator++(int) {
-    return *this += 1;
+    big_integer a(*this);
+    *this += 1;
+    return a;
 };
 
 big_integer &big_integer::operator--() {
@@ -401,7 +403,9 @@ big_integer &big_integer::operator--() {
 };
 
 big_integer big_integer::operator--(int) {
-    return *this -= 1;
+    big_integer a(*this);
+    *this -= 1;
+    return a;
 };
 
 std::string to_string(big_integer const &a) {
@@ -507,7 +511,6 @@ std::ostream &operator<<(std::ostream &cout_, big_integer const &a) {
     cout_ << to_string(a);
     return cout_;
 }
-
 
 
 
