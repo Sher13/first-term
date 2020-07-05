@@ -6,8 +6,6 @@
 
 typedef unsigned __int128 uint128_t;
 
-class vector;
-
 int flags(big_integer const &a, big_integer const &b) {
     // '<' = 1;  '>' = -1; '==' 0;
     if (a.sign && !b.sign)
@@ -36,6 +34,19 @@ int flags(big_integer const &a, big_integer const &b) {
     if (a.sign && b.sign)
         return 0 - ans;
     return ans;
+}
+
+bool equals(big_integer const &a, big_integer const &b) {
+    if (a.sign != b.sign)
+        return false;
+    if (a.digits.size() != b.digits.size())
+        return false;
+    for(int i = a.digits.size() - 1; i >= 0; i--) {
+        if (a.digits[i] != b.digits[i]) {
+            return false;
+        }
+    }
+    return true;
 }
 
 void big_integer::norm() {
@@ -83,12 +94,11 @@ unsigned int big_integer::div_little(unsigned int b) {
 void big_integer::mul_little(unsigned int b) {
     digits.push_back(0);
     unsigned long long carry = 0;
-    for(size_t i = 0; i < digits.size() - 1; i++) {
+    for(size_t i = 0; i < digits.size(); i++) {
         unsigned long long x = (unsigned long long) digits[i] * b + carry;
         digits[i] = x % radix;
         carry = x / radix;
     }
-    digits.back() = carry;
     (*this).norm();
 }
 
@@ -124,15 +134,15 @@ big_integer big_integer::div_(big_integer const &bb) {
         uint128_t a3 = (uint128_t) digits[x] * radix * radix + (uint128_t) digits[x - 1] * radix +
                        (uint128_t) digits[x - 2];
         unsigned int d = a3 / b2;
-        unsigned int q = std::min((unsigned int) d, UINT32_MAX);
-        c = b;
-        c.mul_little(q);
+        d = std::min((unsigned int) d, UINT32_MAX);
+        c.digits = b.digits;
+        c.mul_little(d);
         (*this).norm();
         if ((*this) < c) {
-            q--;
+            d--;
             c -= b;
         }
-        rez.digits.push_back(q);
+        rez.digits.push_back(d);
         b.digits.erase(b.digits.begin());
         (*this) -= c;
         if (digits.size() < b.digits.size() + 1) {
@@ -149,11 +159,11 @@ big_integer big_integer::div_(big_integer const &bb) {
 
 big_integer::big_integer()
         : sign(false) {
-};
+}
 
 big_integer::big_integer(big_integer const &other)
         : sign(other.sign), digits(other.digits) {
-};
+}
 
 big_integer::big_integer(int a)
         : big_integer() {
@@ -164,12 +174,12 @@ big_integer::big_integer(int a)
     long b = a;
     b = std::abs(b);
     digits.push_back(b);
-};
+}
 
 big_integer::big_integer(unsigned int a)
         : big_integer() {
     digits.push_back(a);
-};
+}
 
 big_integer::big_integer(const std::string &str)
         : big_integer() {
@@ -203,7 +213,7 @@ big_integer &big_integer::operator=(big_integer const &other) {
     big_integer res(other);
     swap((*this), res);
     return *this;
-};
+}
 
 big_integer &big_integer::operator+=(big_integer const &rhs) {
     size_t mx = std::max(rhs.digits.size(), digits.size()) + 1;
@@ -244,12 +254,12 @@ big_integer &big_integer::operator+=(big_integer const &rhs) {
     }
     (*this).norm();
     return (*this);
-};
+}
 
 
 big_integer &big_integer::operator-=(big_integer const &rhs) {
     return *this += (-rhs);
-};
+}
 
 big_integer &big_integer::operator*=(big_integer const &rhs) {
     if (rhs.digits.empty() || digits.empty()) {
@@ -285,7 +295,7 @@ big_integer &big_integer::operator*=(big_integer const &rhs) {
     a.norm();
     swap(a, *this);
     return *this;
-};
+}
 
 big_integer &big_integer::operator/=(big_integer const &rhs) {
     auto rez = (*this).div_(rhs);
@@ -369,14 +379,14 @@ big_integer &big_integer::operator>>=(int rhs) {
 
 big_integer big_integer::operator+() const {
     return *this;
-};
+}
 
 big_integer big_integer::operator-() const {
     big_integer a(*this);
     a.sign = !a.sign;
     a.norm();
     return a;
-};
+}
 
 big_integer big_integer::operator~() const {
     return -(*this) - 1;
@@ -384,23 +394,23 @@ big_integer big_integer::operator~() const {
 
 big_integer &big_integer::operator++() {
     return *this += 1;
-};
+}
 
 big_integer big_integer::operator++(int) {
     big_integer a(*this);
     *this += 1;
     return a;
-};
+}
 
 big_integer &big_integer::operator--() {
     return *this -= 1;
-};
+}
 
 big_integer big_integer::operator--(int) {
     big_integer a(*this);
     *this -= 1;
     return a;
-};
+}
 
 std::string to_string(big_integer const &a) {
     if (a.digits.empty()) {
@@ -478,8 +488,7 @@ bool operator<(big_integer const &a, big_integer const &b) {
 }
 
 bool operator==(big_integer const &a, big_integer const &b) {
-    int f = flags(a, b);
-    return (f == 0);
+    return equals(a, b);
 }
 
 bool operator>(big_integer const &a, big_integer const &b) {
@@ -488,14 +497,13 @@ bool operator>(big_integer const &a, big_integer const &b) {
 }
 
 bool operator!=(big_integer const &a, big_integer const &b) {
-    int f = flags(a, b);
-    return f != 0;
-};
+    return !equals(a, b);
+}
 
 bool operator<=(big_integer const &a, big_integer const &b) {
     int f = flags(a, b);
     return (f >= 0);
-};
+}
 
 bool operator>=(big_integer const &a, big_integer const &b) {
     int f = flags(a, b);

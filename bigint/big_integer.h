@@ -49,6 +49,7 @@ public:
 
 private:
     friend int flags(big_integer const& a, big_integer const& b);
+    friend bool equals(big_integer const& a, big_integer const& b);
     void norm();
     void bitToTwo();
     void twoToBit();
