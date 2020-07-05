@@ -55,7 +55,7 @@ private:
     void twoToBit();
     std::pair <big_integer, big_integer> div_little(big_integer a, big_integer const& b);
     void mul_little(big_integer const& b);
-    std::pair <big_integer, big_integer> div_(big_integer a, big_integer b);
+    std::pair <big_integer, big_integer> div_(big_integer const& a, big_integer const& b);
     void swap(big_integer& a, big_integer& b);
 };
 

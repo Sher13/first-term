@@ -109,18 +109,18 @@ void big_integer::mul_little(big_integer const &b) {
     (*this).norm();
 }
 
-std::pair<big_integer, big_integer> big_integer::div_(big_integer a, big_integer b) {
-    bool a_sign = a.sign;
-    bool b_sign = b.sign;
+std::pair<big_integer, big_integer> big_integer::div_(big_integer const& aa, big_integer const& bb) {
+    big_integer a(aa);
+    big_integer b(bb);
     a.sign = false;
     b.sign = false;
     if (a < b) {
-        a.sign = a_sign;
+        a.sign = aa.sign;
         return std::make_pair(0, a);
     }
     if (b.digits.size() == 1) {
-        b.sign = b_sign;
-        a.sign = a_sign;
+        b.sign = bb.sign;
+        a.sign = aa.sign;
         return div_little(a, b);
     }
     unsigned int f = radix / (b.digits.back() + 1);
@@ -152,10 +152,10 @@ std::pair<big_integer, big_integer> big_integer::div_(big_integer a, big_integer
             a.digits.insert(a.digits.end(), b.digits.size() - a.digits.size() + 1, 0);
         }
     }
-    rez.sign = a_sign ^ b_sign;
+    rez.sign = aa.sign ^ bb.sign;
     reverse(rez.digits.begin(), rez.digits.end());
     rez.norm();
-    a.sign = a_sign;
+    a.sign = aa.sign;
     a = div_little(a, f).first;
     return std::make_pair(rez, a);
 }
@@ -403,17 +403,20 @@ std::string to_string(big_integer const &a) {
     b.digits.push_back(0);
     b.sign = false;
     while(!b.digits.empty()) {
-        auto x = b.div_little(b, 10);
+        auto x = b.div_little(b, 1000000000);
         b = x.first;
         if (x.second.digits.empty()) {
             x.second.digits.push_back(0);
         }
-        s += (char) (x.second.digits[0] + '0');
+        std::string y = std::to_string(x.second.digits[0]);
+        while(y.size() != 9) {
+            y = "0" + y;
+        }
+        s = y + s;
     }
-    while(s.size() != 1 && s.back() == '0') {
-        s.pop_back();
+    while(s.size() != 1 && s[0] == '0') {
+        s.erase(s.begin());
     }
-    reverse(s.begin(), s.end());
     if (a.sign) {
         s = '-' + s;
     }
@@ -500,5 +503,3 @@ std::ostream &operator<<(std::ostream &cout_, big_integer const &a) {
     cout_ << to_string(a);
     return cout_;
 }
-
-
