@@ -74,11 +74,11 @@ void big_integer::twoToBit() {
 }
 
 
-std::pair<big_integer, big_integer> big_integer::div_little(big_integer a, big_integer b) {
+std::pair<big_integer, big_integer> big_integer::div_little(big_integer a, big_integer const &b) {
     unsigned int b1 = b.digits[0];
     unsigned long long x = 0;
     big_integer rez;
-    for(int i = a.digits.size()-1; i >= 0; i--) {
+    for(int i = a.digits.size() - 1; i >= 0; i--) {
         x = x * radix + a.digits[i];
         rez.digits.push_back(x / b1);
         x %= b1;
@@ -95,12 +95,12 @@ std::pair<big_integer, big_integer> big_integer::div_little(big_integer a, big_i
     return std::make_pair(rez, rem);
 }
 
-void big_integer::mul_little(big_integer b) {
+void big_integer::mul_little(big_integer const &b) {
     unsigned long long b1 = b.digits[0];
     digits.push_back(0);
     unsigned long long carry = 0;
-    for (size_t i = 0; i < digits.size()-1; i++) {
-        unsigned long long x = (unsigned long long)digits[i]*b1 + carry;
+    for(size_t i = 0; i < digits.size() - 1; i++) {
+        unsigned long long x = (unsigned long long) digits[i] * b1 + carry;
         digits[i] = x % radix;
         carry = x / radix;
     }
@@ -127,25 +127,27 @@ std::pair<big_integer, big_integer> big_integer::div_(big_integer a, big_integer
     a.mul_little(f);
     b.mul_little(f);
     a.digits.push_back(0);
-    uint128_t b2 = b.digits.back()*radix + b.digits[b.digits.size()-2];
+    uint128_t b2 = b.digits.back() * radix + b.digits[b.digits.size() - 2];
     big_integer rez;
     size_t b_size = b.digits.size();
     b.digits.insert(b.digits.begin(), a.digits.size() - b_size - 1, 0);
+    big_integer c;
     while(b.digits.size() >= b_size) {
         size_t x = a.digits.size() - 1;
-        uint128_t a3 = (uint128_t)a.digits[x] * radix * radix + (uint128_t)a.digits[x-1] * radix + (uint128_t)a.digits[x-2];
-        unsigned int d = a3/b2;
-        unsigned int q = std::min((unsigned int)d, UINT32_MAX);
-        big_integer c = b;
+        uint128_t a3 = (uint128_t) a.digits[x] * radix * radix + (uint128_t) a.digits[x - 1] * radix +
+                       (uint128_t) a.digits[x - 2];
+        unsigned int d = a3 / b2;
+        unsigned int q = std::min((unsigned int) d, UINT32_MAX);
+        c = b;
         c.mul_little(q);
         a.norm();
         if (a < c) {
             q--;
-            c-=b;
+            c -= b;
         }
         rez.digits.push_back(q);
         b.digits.erase(b.digits.begin());
-        a-=c;
+        a -= c;
         if (a.digits.size() < b.digits.size() + 1) {
             a.digits.insert(a.digits.end(), b.digits.size() - a.digits.size() + 1, 0);
         }
@@ -158,14 +160,12 @@ std::pair<big_integer, big_integer> big_integer::div_(big_integer a, big_integer
     return std::make_pair(rez, a);
 }
 
-big_integer::big_integer() {
-    sign = false;
+big_integer::big_integer()
+        : sign(false) {
 };
 
-big_integer::big_integer(big_integer const &other) {
-    for(size_t i = 0; i < other.digits.size(); i++)
-        digits.push_back(other.digits[i]);
-    sign = other.sign;
+big_integer::big_integer(big_integer const &other)
+        : sign(other.sign), digits(other.digits) {
 };
 
 big_integer::big_integer(int a) {
@@ -184,8 +184,7 @@ big_integer::big_integer(unsigned int a) {
 };
 
 big_integer::big_integer(const std::string &str)
-        :big_integer()
-{
+        : big_integer() {
     int st = 0;
     bool fl = false;
     if (str[0] == '-') {
@@ -196,12 +195,12 @@ big_integer::big_integer(const std::string &str)
         size_t j = i;
         unsigned int x = 0;
         unsigned int st10 = 1;
-        while(j-i < 9 && j < str.size()) {
-            x = x*10 + (str[j]-'0');
+        while(j - i < 9 && j < str.size()) {
+            x = x * 10 + (str[j] - '0');
             j++;
-            st10*=10;
+            st10 *= 10;
         }
-        i = j-1;
+        i = j - 1;
         (*this).mul_little(st10);
         (*this) += x;
     }
@@ -210,9 +209,8 @@ big_integer::big_integer(const std::string &str)
 }
 
 big_integer &big_integer::operator=(big_integer const &other) {
-    big_integer res = big_integer(other);
-    this->digits = res.digits;
-    this->sign = res.sign;
+    big_integer res(other);
+    swap((*this), res);
     return *this;
 };
 
@@ -231,8 +229,8 @@ big_integer &big_integer::operator+=(big_integer const &rhs) {
             std::swap(a_sign, b_sign);
         }
         long long borrow = 0;
-        for (size_t i = 0; i < mx; i++) {
-            if ((long long)digits[i] >= (long long)b.digits[i] + borrow) {
+        for(size_t i = 0; i < mx; i++) {
+            if ((long long) digits[i] >= (long long) b.digits[i] + borrow) {
                 digits[i] = digits[i] - b.digits[i] - borrow;
                 borrow = 0;
             } else {
@@ -245,7 +243,7 @@ big_integer &big_integer::operator+=(big_integer const &rhs) {
     } else {
         long long carry = 0;
         for(size_t i = 0; i < mx; i++) {
-            long long x = (long long)digits[i] + (long long)b.digits[i] + carry;
+            long long x = (long long) digits[i] + (long long) b.digits[i] + carry;
             digits[i] = x % radix;
             carry = x / radix;
         }
@@ -270,7 +268,7 @@ big_integer &big_integer::operator*=(big_integer const &rhs) {
     }
     big_integer a;
     a.digits.resize(this->digits.size() + rhs.digits.size() + 2);
-    for (size_t i = 0; i < digits.size(); i++) {
+    for(size_t i = 0; i < digits.size(); i++) {
         big_integer b(rhs);
         b.sign = false;
         b.mul_little(digits[i]);
@@ -376,14 +374,7 @@ big_integer big_integer::operator-() const {
 };
 
 big_integer big_integer::operator~() const {
-    big_integer a(*this);
-    a.bitToTwo();
-    for(size_t i = 0; i < a.digits.size(); i++) {
-        a.digits[i] = ~a.digits[i];
-    }
-    a.twoToBit();
-    a.norm();
-    return a;
+    return -(*this)-1;
 }
 
 big_integer &big_integer::operator++() {
@@ -429,7 +420,7 @@ std::string to_string(big_integer const &a) {
     return s;
 }
 
-void big_integer::swap(big_integer& a, big_integer& b) {
+void big_integer::swap(big_integer &a, big_integer &b) {
     using std::swap;
     swap(a.sign, b.sign);
     swap(a.digits, b.digits);
