@@ -110,51 +110,50 @@ void big_integer::mul_little(big_integer b) {
 }
 
 std::pair<big_integer, big_integer> big_integer::div_(big_integer a, big_integer b) {
-    //  a < b
-    if (flags(abs_(a), abs_(b)) == 1) {
+    bool a_sign = a.sign;
+    bool b_sign = b.sign;
+    a.sign = false;
+    b.sign = false;
+    if (a < b) {
+        a.sign = a_sign;
         return std::make_pair(0, a);
     }
     if (b.digits.size() == 1) {
-        return div_little(a, b); // I'm write it later....
+        b.sign = b_sign;
+        a.sign = a_sign;
+        return div_little(a, b);
     }
     unsigned int f = radix / (b.digits.back() + 1);
     a.mul_little(f);
     b.mul_little(f);
     a.digits.push_back(0);
+    uint128_t b2 = b.digits.back()*radix + b.digits[b.digits.size()-2];
     big_integer rez;
-    size_t x = b.digits.size()-1;
-    uint128_t b2 = (uint128_t)b.digits[x] * radix + (uint128_t)b.digits[x-1];
-    bool a_sign = a.sign;
-    bool b_sign = b.sign;
     size_t b_size = b.digits.size();
-    b.sign = false;
-    a.sign = false;
-    b.digits.insert(b.digits.begin(), a.digits.size()-b_size-1, 0);
+    b.digits.insert(b.digits.begin(), a.digits.size() - b_size - 1, 0);
     while(b.digits.size() >= b_size) {
-        x = a.digits.size()-1;
+        size_t x = a.digits.size() - 1;
         uint128_t a3 = (uint128_t)a.digits[x] * radix * radix + (uint128_t)a.digits[x-1] * radix + (uint128_t)a.digits[x-2];
-        unsigned int d = a3 / b2;
-        unsigned int d1 = std::min(d, UINT32_MAX);
+        unsigned int d = a3/b2;
+        unsigned int q = std::min((unsigned int)d, UINT32_MAX);
         big_integer c = b;
-        c.mul_little(d1);
+        c.mul_little(q);
         a.norm();
-        if (flags(a, c) == 1) {
-            d1--;
-            c -= b;
+        if (a < c) {
+            q--;
+            c-=b;
         }
-        rez.digits.push_back(d1);
+        rez.digits.push_back(q);
         b.digits.erase(b.digits.begin());
-        a -= c;
-        if(a.digits.size() < b.digits.size()+1) {
-            a.digits.insert(a.digits.end(), b.digits.size()-a.digits.size()+1, 0);
+        a-=c;
+        if (a.digits.size() < b.digits.size() + 1) {
+            a.digits.insert(a.digits.end(), b.digits.size() - a.digits.size() + 1, 0);
         }
     }
-    if (a_sign != b_sign) {
-        rez.sign = true;
-    }
-    a.sign = a_sign;
+    rez.sign = a_sign ^ b_sign;
     reverse(rez.digits.begin(), rez.digits.end());
     rez.norm();
+    a.sign = a_sign;
     a = div_little(a, f).first;
     return std::make_pair(rez, a);
 }
@@ -510,10 +509,5 @@ std::ostream &operator<<(std::ostream &cout_, big_integer const &a) {
     cout_ << to_string(a);
     return cout_;
 }
-
-
-
-
-
 
 
