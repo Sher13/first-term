@@ -278,11 +278,15 @@ big_integer &big_integer::operator*=(big_integer const &rhs) {
     big_integer a;
     a.digits.resize(this->digits.size() + rhs.digits.size() + 2);
     for(size_t i = 0; i < digits.size(); i++) {
-        big_integer b(rhs);
-        b.sign = false;
-        b.mul_little(digits[i]);
-        b.digits.insert(b.digits.begin(), i, 0);
-        a += b;
+        for (size_t j = 0; j < rhs.digits.size(); j++) {
+            unsigned long long x = rhs.digits[j];
+            x *= digits[i];
+            unsigned long long y = x % radix + a.digits[i + j];
+            a.digits[i + j] = y % radix;
+            unsigned long long z = x/radix + y / radix + a.digits[i + j +1];
+            a.digits[i + j + 1] = z % radix;
+            a.digits[i + j + 2] += z / radix;
+        }
     }
     a.sign = sign ^ rhs.sign;
     a.norm();
