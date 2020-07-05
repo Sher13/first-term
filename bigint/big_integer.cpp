@@ -69,24 +69,21 @@ void big_integer::twoToBit() {
 }
 
 
-void big_integer::div_little(big_integer const &b) {
-    unsigned int b1 = b.digits[0];
+void big_integer::div_little(unsigned int b) {
     unsigned long long x = 0;
     for(int i = digits.size() - 1; i >= 0; i--) {
         x = x * radix + digits[i];
-        digits[i] = x / b1;
-        x %= b1;
+        digits[i] = x / b;
+        x %= b;
     }
-    sign = sign ^ b.sign;
     (*this).norm();
 }
 
-unsigned int big_integer::mod_little(big_integer const &b) {
-    unsigned int b1 = b.digits[0];
+unsigned int big_integer::mod_little(unsigned int b) {
     unsigned long long x = 0;
     for(int i = digits.size() - 1; i >= 0; i--) {
         x = x * radix + digits[i];
-        x %= b1;
+        x %= b;
     }
     return x;
 }
@@ -115,11 +112,11 @@ std::pair<big_integer, big_integer> big_integer::div_(big_integer const &aa, big
         return std::make_pair(0, a);
     }
     if (b.digits.size() == 1) {
-        a.sign = aa.sign;
-        big_integer rez(a.mod_little(bb));
+        a.sign = aa.sign ^ bb.sign;
+        big_integer rez(a.mod_little(bb.digits[0]));
         rez.sign = aa.sign;
         rez.norm();
-        a.div_little(bb);
+        a.div_little(bb.digits[0]);
         return std::make_pair(a, rez);
     }
     unsigned int f = radix / (b.digits.back() + 1);
@@ -418,10 +415,9 @@ std::string to_string(big_integer const &a) {
     big_integer b(a);
     b.digits.push_back(0);
     b.sign = false;
-    big_integer st10(1000000000);
     while(!b.digits.empty()) {
-        unsigned int rem = b.mod_little(st10);
-        b.div_little(st10);
+        unsigned int rem = b.mod_little(1000000000);
+        b.div_little(1000000000);
         std::string y = std::to_string(rem);
         y.insert(y.begin(), 9 - y.size(), '0');
         reverse(y.begin(), y.end());
