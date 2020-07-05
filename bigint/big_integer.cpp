@@ -142,14 +142,9 @@ std::pair<big_integer, big_integer> big_integer::div_(big_integer const &aa, big
         rez.digits.push_back(q);
         b.digits.erase(b.digits.begin());
         a -= c;
-        if (a.digits.empty())
-            break;
         if (a.digits.size() < b.digits.size() + 1) {
             a.digits.insert(a.digits.end(), b.digits.size() - a.digits.size() + 1, 0);
         }
-    }
-    if (b.digits.size() >= b_size) {
-        rez.digits.insert(rez.digits.end(), b.digits.size()-b_size+1, 0);
     }
     rez.sign = aa.sign ^ bb.sign;
     reverse(rez.digits.begin(), rez.digits.end());
@@ -189,6 +184,9 @@ big_integer::big_integer(const std::string &str)
     bool fl = false;
     if (str[0] == '-') {
         fl = true;
+        st++;
+    }
+    if (str[0] == '+') {
         st++;
     }
     for(size_t i = st; i < str.size(); i++) {
@@ -415,21 +413,22 @@ std::string to_string(big_integer const &a) {
     big_integer b(a);
     b.digits.push_back(0);
     b.sign = false;
+    big_integer st10(1000000000);
     while(!b.digits.empty()) {
-        auto x = b.div_little(b, 1000000000);
+        auto x = b.div_little(b, st10);
         b = x.first;
         if (x.second.digits.empty()) {
             x.second.digits.push_back(0);
         }
         std::string y = std::to_string(x.second.digits[0]);
-        while(y.size() != 9) {
-            y = "0" + y;
-        }
-        s = y + s;
+        y.insert(y.begin(), 9 - y.size(), '0');
+        reverse(y.begin(), y.end());
+        s += y;
     }
-    while(s.size() != 1 && s[0] == '0') {
-        s.erase(s.begin());
+    while(s.size() != 1 && s.back() == '0') {
+        s.pop_back();
     }
+    reverse(s.begin(), s.end());
     if (a.sign) {
         s = '-' + s;
     }
