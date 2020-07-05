@@ -50,10 +50,10 @@ public:
 private:
     friend int flags(big_integer const& a, big_integer const& b);
     void norm();
-    big_integer abs_(big_integer a);
     void bitToTwo();
     void twoToBit();
-    std::pair <big_integer, big_integer> div_little(big_integer const& a, big_integer const& b);
+    void div_little(big_integer const& b);
+    void mod_little(big_integer const& b, big_integer a);
     void mul_little(big_integer const& b);
     std::pair <big_integer, big_integer> div_(big_integer const& a, big_integer const& b);
     void swap(big_integer& a, big_integer& b);

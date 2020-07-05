@@ -69,26 +69,21 @@ void big_integer::twoToBit() {
 }
 
 
-std::pair<big_integer, big_integer> big_integer::div_little(big_integer const &aa, big_integer const &b) {
-    big_integer a(aa);
+void big_integer::div_little(big_integer const &b) {
     unsigned int b1 = b.digits[0];
     unsigned long long x = 0;
-    big_integer rez;
-    for(int i = a.digits.size() - 1; i >= 0; i--) {
-        x = x * radix + a.digits[i];
-        rez.digits.push_back(x / b1);
+    for(int i = digits.size() - 1; i >= 0; i--) {
+        x = x * radix + digits[i];
+        digits[i] = x / b1;
         x %= b1;
     }
-    if (a.sign != b.sign) {
-        rez.sign = true;
-    }
-    reverse(rez.digits.begin(), rez.digits.end());
-    rez.norm();
-    unsigned int x1 = x;
-    big_integer rem(x1);
-    rem.sign = a.sign;
-    rem.norm();
-    return std::make_pair(rez, rem);
+    sign = sign ^ b.sign;
+    (*this).norm();
+}
+
+void big_integer::mod_little(big_integer const &b, big_integer a) {
+    a.mul_little(b);
+    (*this) -= a;
 }
 
 void big_integer::mul_little(big_integer const &b) {
@@ -115,7 +110,11 @@ std::pair<big_integer, big_integer> big_integer::div_(big_integer const &aa, big
         return std::make_pair(0, a);
     }
     if (b.digits.size() == 1) {
-        return div_little(aa, bb);
+        a.sign = aa.sign;
+        big_integer rez = a;
+        a.div_little(bb);
+        rez.mod_little(bb, a);
+        return std::make_pair(a, rez);
     }
     unsigned int f = radix / (b.digits.back() + 1);
     a.mul_little(f);
@@ -150,7 +149,7 @@ std::pair<big_integer, big_integer> big_integer::div_(big_integer const &aa, big
     reverse(rez.digits.begin(), rez.digits.end());
     rez.norm();
     a.sign = aa.sign;
-    a = div_little(a, f).first;
+    a.div_little(f);
     return std::make_pair(rez, a);
 }
 
@@ -415,12 +414,13 @@ std::string to_string(big_integer const &a) {
     b.sign = false;
     big_integer st10(1000000000);
     while(!b.digits.empty()) {
-        auto x = b.div_little(b, st10);
-        b = x.first;
-        if (x.second.digits.empty()) {
-            x.second.digits.push_back(0);
+        big_integer rem = b;
+        b.div_little(st10);
+        rem.mod_little(st10, b);
+        if (rem.digits.empty()) {
+            rem.digits.push_back(0);
         }
-        std::string y = std::to_string(x.second.digits[0]);
+        std::string y = std::to_string(rem.digits[0]);
         y.insert(y.begin(), 9 - y.size(), '0');
         reverse(y.begin(), y.end());
         s += y;
