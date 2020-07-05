@@ -52,8 +52,7 @@ private:
     void norm();
     void bitToTwo();
     void twoToBit();
-    void div_little(unsigned int b);
-    unsigned int mod_little(unsigned int b);
+    unsigned int div_little(unsigned int b);
     void mul_little(big_integer const& b);
     std::pair <big_integer, big_integer> div_(big_integer const& a, big_integer const& b);
     void swap(big_integer& a, big_integer& b);
