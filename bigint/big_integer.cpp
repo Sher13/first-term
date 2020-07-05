@@ -141,9 +141,14 @@ std::pair<big_integer, big_integer> big_integer::div_(big_integer const &aa, big
         rez.digits.push_back(q);
         b.digits.erase(b.digits.begin());
         a -= c;
+        if (a == 0)
+            break;
         if (a.digits.size() < b.digits.size() + 1) {
             a.digits.insert(a.digits.end(), b.digits.size() - a.digits.size() + 1, 0);
         }
+    }
+    if (b.digits.size() >= b_size) {
+        rez.digits.insert(rez.digits.end(), b.digits.size()-b_size+1, 0);
     }
     rez.sign = aa.sign ^ bb.sign;
     reverse(rez.digits.begin(), rez.digits.end());
