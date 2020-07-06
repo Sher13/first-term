@@ -122,15 +122,6 @@ big_integer big_integer::div_(big_integer const &bb) {
                        (uint128_t) digits[x - 2];
         unsigned int d = a3 / b2;
         d = std::min((unsigned int) d, UINT32_MAX);
-        if (d == 0) {
-            rez.digits.push_back(d);
-            b.digits.erase(b.digits.begin());
-            (*this).norm();
-            if (digits.size() < b.digits.size() + 1) {
-                digits.insert(digits.end(), b.digits.size() - digits.size() + 1, 0);
-            }
-            continue;
-        }
         c.digits = b.digits;
         c.mul_little(d);
         (*this).norm();
