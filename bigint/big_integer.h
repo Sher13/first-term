@@ -55,7 +55,7 @@ private:
     unsigned int div_little(unsigned int b);
     void mul_little(unsigned int b);
     big_integer div_(big_integer const& b);
-    void swap(big_integer& a, big_integer& b);
+    void swap(big_integer& b);
 };
 
 big_integer operator+(big_integer a, big_integer const& b);     // ok

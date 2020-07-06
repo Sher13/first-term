@@ -104,7 +104,7 @@ big_integer big_integer::div_(big_integer const &bb) {
         big_integer rez((*this).div_little(bb.digits[0]));
         rez.sign = a_sign;
         rez.norm();
-        swap(rez, (*this));
+        swap(rez);
         return rez;
     }
     unsigned int f = radix / (b.digits.back() + 1);
@@ -201,7 +201,7 @@ big_integer::big_integer(const std::string &str)
 
 big_integer &big_integer::operator=(big_integer const &other) {
     big_integer res(other);
-    swap((*this), res);
+    swap(res);
     return *this;
 }
 
@@ -216,7 +216,7 @@ big_integer &big_integer::operator+=(big_integer const &rhs) {
         sign = false;
         b.sign = false;
         if (*this < b) {
-            swap(*this, b);
+            swap( b);
             std::swap(a_sign, b_sign);
         }
         long long borrow = 0;
@@ -265,7 +265,7 @@ big_integer &big_integer::operator*=(big_integer const &rhs) {
         big_integer c(rhs);
         c.sign ^= sign;
         c.mul_little(digits[0]);
-        swap(c, *this);
+        swap(c);
         return *this;
     }
     big_integer a;
@@ -283,13 +283,13 @@ big_integer &big_integer::operator*=(big_integer const &rhs) {
     }
     a.sign = sign ^ rhs.sign;
     a.norm();
-    swap(a, *this);
+    swap(a);
     return *this;
 }
 
 big_integer &big_integer::operator/=(big_integer const &rhs) {
     auto rez = (*this).div_(rhs);
-    swap(rez, (*this));
+    swap(rez);
     return *this;
 }
 
@@ -426,10 +426,10 @@ std::string to_string(big_integer const &a) {
     return s;
 }
 
-void big_integer::swap(big_integer &a, big_integer &b) {
+void big_integer::swap(big_integer &b) {
     using std::swap;
-    swap(a.sign, b.sign);
-    swap(a.digits, b.digits);
+    swap(sign, b.sign);
+    swap(digits, b.digits);
 }
 
 big_integer operator+(big_integer a, big_integer const &b) {
