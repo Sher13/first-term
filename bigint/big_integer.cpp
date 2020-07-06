@@ -130,7 +130,8 @@ big_integer big_integer::div_(big_integer const &bb) {
     size_t b_size = b.digits.size();
     b.digits.insert(b.digits.begin(), digits.size() - b_size - 1, 0);
     big_integer c;
-    while(b.digits.size() >= b_size) {
+    size_t cou = b.digits.size();
+    while(cou >= b_size) {
         size_t x = digits.size() - 1;
         uint128_t a3 = digits[x];
         a3<<=32;
@@ -139,7 +140,10 @@ big_integer big_integer::div_(big_integer const &bb) {
         a3 += digits[x-2];
         unsigned int d = a3 / b2;
         d = std::min((unsigned int) d, UINT32_MAX);
-        c.digits = b.digits;
+        size_t y = b.digits.size()-cou;
+        c.digits.resize(cou);
+        for (size_t i = b.digits.size() - cou; i < b.digits.size(); i++)
+            c.digits[i-y] = b.digits[i];
         c.mul_little(d);
         norm();
         if (less_abs(*this, c)) {
@@ -147,10 +151,10 @@ big_integer big_integer::div_(big_integer const &bb) {
             c.sub_(b);
         }
         rez.digits.push_back(d);
-        b.digits.erase(b.digits.begin());
+        cou--;
         (*this).sub_(c);
-        if (digits.size() < b.digits.size() + 1) {
-            digits.insert(digits.end(), b.digits.size() - digits.size() + 1, 0);
+        if (digits.size() < cou + 1) {
+            digits.insert(digits.end(), cou - digits.size() + 1, 0);
         }
     }
     rez.sign = a_sign ^ bb.sign;
