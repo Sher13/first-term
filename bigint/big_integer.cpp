@@ -18,7 +18,7 @@ int flags(big_integer const &a, big_integer const &b) {
     } else if (a.digits.size() > b.digits.size()) {
         ans = -1;
     } else {
-        for(int i = a.digits.size() - 1; i >= 0; i--) {
+        for(size_t i = a.digits.size() - 1; i+1 > 0; i--) {
             if (a.digits[i] < b.digits[i]) {
                 ans = 1;
                 break;
@@ -40,7 +40,7 @@ bool less_abs(big_integer const& a, big_integer const& b) {
         return true;
     if (a.digits.size() > b.digits.size())
         return false;
-    for(int i = a.digits.size() - 1; i >= 0; i--) {
+    for(size_t i = a.digits.size() - 1; i+1 > 0; i--) {
         if (a.digits[i] < b.digits[i]) {
             return true;
         }
@@ -62,7 +62,7 @@ void big_integer::norm() {
 void big_integer::bitToTwo() {
     if (!sign)
         return;
-    for(unsigned int &digit : digits) {
+    for(uint32_t &digit : digits) {
         digit = ~digit;
     }
     sign = false;
@@ -75,16 +75,16 @@ void big_integer::twoToBit() {
     if ((digits.back() & 2147483648) != 2147483648)
         return;
     (*this)--;
-    for(unsigned int &digit : digits) {
+    for(uint32_t &digit : digits) {
         digit = ~digit;
     }
     sign = true;
 }
 
 // a = a/b, return a % b
-unsigned int big_integer::div_little(unsigned int b) {
-    unsigned long long x = 0;
-    for(int i = digits.size() - 1; i >= 0; i--) {
+uint32_t big_integer::div_little(uint32_t b) {
+    uint64_t x = 0;
+    for(size_t i = digits.size() - 1; i+1 > 0; i--) {
         x = x * radix + digits[i];
         digits[i] = x / b;
         x %= b;
@@ -93,11 +93,11 @@ unsigned int big_integer::div_little(unsigned int b) {
     return x;
 }
 
-void big_integer::mul_little(unsigned int b) {
+void big_integer::mul_little(uint32_t b) {
     digits.push_back(0);
-    unsigned long long carry = 0;
+    uint64_t carry = 0;
     for(size_t i = 0; i < digits.size(); i++) {
-        unsigned long long x = (unsigned long long) digits[i] * b + carry;
+        uint64_t x = (uint64_t) digits[i] * b + carry;
         digits[i] = x % radix;
         carry = x / radix;
     }
@@ -121,7 +121,7 @@ big_integer big_integer::div_(big_integer const &bb) {
     bool a_sign = sign;
     sign = false;
     b.sign = false;
-    unsigned int f = radix / (b.digits.back() + 1);
+    uint32_t f = radix / (b.digits.back() + 1);
     mul_little(f);
     b.mul_little(f);
     digits.push_back(0);
@@ -138,8 +138,8 @@ big_integer big_integer::div_(big_integer const &bb) {
         a3 += digits[x-1];
         a3<<=32;
         a3 += digits[x-2];
-        unsigned int d = a3 / b2;
-        d = std::min((unsigned int) d, UINT32_MAX);
+        uint32_t d = a3 / b2;
+        d = std::min((uint32_t) d, UINT32_MAX);
         size_t y = b.digits.size()-cou;
         c.digits.resize(cou);
         for (size_t i = b.digits.size() - cou; i < b.digits.size(); i++)
@@ -184,14 +184,14 @@ big_integer::big_integer(int a)
     digits.push_back(b);
 }
 
-big_integer::big_integer(unsigned int a)
+big_integer::big_integer(uint32_t a)
         : big_integer() {
     digits.push_back(a);
 }
 
 big_integer::big_integer(const std::string &str)
         : big_integer() {
-    int st = 0;
+    size_t st = 0;
     bool fl = false;
     if (str[0] == '-') {
         fl = true;
@@ -202,8 +202,8 @@ big_integer::big_integer(const std::string &str)
     }
     for(size_t i = st; i < str.size(); i++) {
         size_t j = i;
-        unsigned int x = 0;
-        unsigned int st10 = 1;
+        uint32_t x = 0;
+        uint32_t st10 = 1;
         while(j - i < 9 && j < str.size()) {
             x = x * 10 + (str[j] - '0');
             j++;
@@ -234,7 +234,7 @@ void big_integer::sub_(big_integer const &b) {
             digits[i] = digits[i] - b_dig - borrow;
             borrow = 0;
         } else {
-            unsigned long long x = digits[i] + radix - b_dig - borrow;
+            uint64_t x = digits[i] + radix - b_dig - borrow;
             digits[i] = x;
             borrow = 1;
         }
@@ -294,11 +294,11 @@ big_integer &big_integer::operator*=(big_integer const &rhs) {
     a.digits.resize(this->digits.size() + rhs.digits.size() + 2);
     for(size_t i = 0; i < digits.size(); i++) {
         for(size_t j = 0; j < rhs.digits.size(); j++) {
-            unsigned long long x = rhs.digits[j];
+            uint64_t x = rhs.digits[j];
             x *= digits[i];
-            unsigned long long y = x % radix + a.digits[i + j];
+            uint64_t y = x % radix + a.digits[i + j];
             a.digits[i + j] = y % radix;
-            unsigned long long z = x / radix + y / radix + a.digits[i + j + 1];
+            uint64_t z = x / radix + y / radix + a.digits[i + j + 1];
             a.digits[i + j + 1] = z % radix;
             a.digits[i + j + 2] += z / radix;
         }
@@ -370,7 +370,7 @@ big_integer &big_integer::operator<<=(int rhs) {
     int kl = rhs / 32;
     rhs %= 32;
     digits.insert(digits.begin(), kl, 0);
-    unsigned int e = 1;
+    uint32_t e = 1;
     e <<= rhs;
     return *this *= e;
 }
@@ -380,7 +380,7 @@ big_integer &big_integer::operator>>=(int rhs) {
     int kl = rhs / 32;
     rhs %= 32;
     digits.erase(digits.begin(), digits.begin() + kl);
-    unsigned int e = 1;
+    uint32_t e = 1;
     e <<= rhs;
     (*this) /= e;
     if (sign && (*this) % e != 0) {
@@ -432,7 +432,7 @@ std::string to_string(big_integer const &a) {
     big_integer b(a);
     b.sign = false;
     while(!b.digits.empty()) {
-        unsigned int rem = b.div_little(1000000000);
+        uint32_t rem = b.div_little(1000000000);
         std::string y = std::to_string(rem);
         reverse(y.begin(), y.end());
         y.insert(y.end(), 9 - y.size(), '0');

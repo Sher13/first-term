@@ -9,15 +9,15 @@ struct big_integer
 {
 private:
 
-    std::vector <unsigned int> digits;
+    std::vector <uint32_t> digits;
     bool sign;
-    unsigned long long radix = 4294967296; // 2^32
+    uint64_t radix = 4294967296; // 2^32
 
 public:
     big_integer();                                          // ok
     big_integer(big_integer const& other);                  // ok
     big_integer(int a);                                     // ok
-    big_integer(unsigned int a);                            // just another one constructor ^^
+    big_integer(uint32_t a);                            // just another one constructor ^^
     explicit big_integer(std::string const& str);           // ok
 
     big_integer& operator=(big_integer const& other);       // ok
@@ -54,8 +54,8 @@ private:
     void sub_(big_integer const &b);
     void bitToTwo();
     void twoToBit();
-    unsigned int div_little(unsigned int b);
-    void mul_little(unsigned int b);
+    uint32_t div_little(uint32_t b);
+    void mul_little(uint32_t b);
     big_integer div_(big_integer const& b);
     void swap(big_integer& b);
 };
