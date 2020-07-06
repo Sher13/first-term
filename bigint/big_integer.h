@@ -51,6 +51,7 @@ private:
     friend int flags(big_integer const& a, big_integer const& b);
     friend bool less_abs(big_integer const& a, big_integer const& b);
     void norm();
+    void sub_(big_integer const &b);
     void bitToTwo();
     void twoToBit();
     unsigned int div_little(unsigned int b);
