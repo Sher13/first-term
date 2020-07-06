@@ -118,8 +118,11 @@ big_integer big_integer::div_(big_integer const &bb) {
     big_integer c;
     while(b.digits.size() >= b_size) {
         size_t x = digits.size() - 1;
-        uint128_t a3 = (uint128_t) digits[x] * radix * radix + (uint128_t) digits[x - 1] * radix +
-                       (uint128_t) digits[x - 2];
+        uint128_t a3 = digits[x];
+        a3<<=32;
+        a3 += digits[x-1];
+        a3<<=32;
+        a3 += digits[x-2];
         unsigned int d = a3 / b2;
         d = std::min((unsigned int) d, UINT32_MAX);
         c.digits = b.digits;
