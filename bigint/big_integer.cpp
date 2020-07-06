@@ -35,6 +35,21 @@ int flags(big_integer const &a, big_integer const &b) {
         return 0 - ans;
     return ans;
 }
+bool less_abs(big_integer const& a, big_integer const& b) {
+    if (a.digits.size() < b.digits.size())
+        return true;
+    if (a.digits.size() > b.digits.size())
+        return false;
+    for(int i = a.digits.size() - 1; i >= 0; i--) {
+        if (a.digits[i] < b.digits[i]) {
+            return true;
+        }
+        if (a.digits[i] > b.digits[i]) {
+            return false;
+        }
+    }
+    return false;
+}
 
 void big_integer::norm() {
     while(digits.size() && digits.back() == 0)
@@ -91,22 +106,21 @@ void big_integer::mul_little(unsigned int b) {
 
 // a = a % bb, return a / bb
 big_integer big_integer::div_(big_integer const &bb) {
-    big_integer b(bb);
-    bool a_sign = sign;
-    sign = false;
-    b.sign = false;
-    if ((*this) < b) {
-        sign = a_sign;
+    if (less_abs(*this, bb)) {
         return 0;
     }
-    if (b.digits.size() == 1) {
-        sign = a_sign ^ bb.sign;
+    if (bb.digits.size() == 1) {
         big_integer rez((*this).div_little(bb.digits[0]));
-        rez.sign = a_sign;
+        rez.sign = sign;
+        sign ^= bb.sign;
         rez.norm();
         swap(rez);
         return rez;
     }
+    big_integer b(bb);
+    bool a_sign = sign;
+    sign = false;
+    b.sign = false;
     unsigned int f = radix / (b.digits.back() + 1);
     (*this).mul_little(f);
     b.mul_little(f);
@@ -128,7 +142,7 @@ big_integer big_integer::div_(big_integer const &bb) {
         c.digits = b.digits;
         c.mul_little(d);
         (*this).norm();
-        if ((*this) < c) {
+        if (less_abs(*this, c)) {
             d--;
             c -= b;
         }
@@ -207,18 +221,13 @@ big_integer &big_integer::operator=(big_integer const &other) {
 
 big_integer &big_integer::operator+=(big_integer const &rhs) {
     size_t mx = std::max(rhs.digits.size(), digits.size()) + 1;
-    digits.resize(mx);
     if (sign != rhs.sign) {
         big_integer b(rhs);
-        b.digits.resize(mx);
-        bool a_sign = sign;
-        bool b_sign = b.sign;
-        sign = false;
-        b.sign = false;
-        if (*this < b) {
+        if (less_abs(*this, b)) {
             swap( b);
-            std::swap(a_sign, b_sign);
         }
+        b.digits.resize(mx);
+        digits.resize(mx);
         long long borrow = 0;
         for(size_t i = 0; i < mx; i++) {
             if ((long long) digits[i] >= (long long) b.digits[i] + borrow) {
@@ -230,8 +239,8 @@ big_integer &big_integer::operator+=(big_integer const &rhs) {
                 borrow = 1;
             }
         }
-        sign = a_sign;
     } else {
+        digits.resize(mx);
         long long carry = 0;
         for(size_t i = 0; i < mx; i++) {
             long long b = 0;
