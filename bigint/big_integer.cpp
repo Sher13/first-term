@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <functional>
 #include "big_integer.h"
 
 typedef unsigned __int128 uint128_t;
@@ -103,7 +104,15 @@ void big_integer::mul_little(uint32_t b) {
     }
     norm();
 }
-
+uint128_t big_integer::get(big_integer const& a, size_t n) {
+    uint128_t x  = 0;
+    for (size_t i = 0; i < n; i++) {
+        x += a.digits[a.digits.size() - i -1];
+        x <<= 32;
+    }
+    x >>= 32;
+    return x;
+}
 // a = a % bb, return a / bb
 big_integer big_integer::div_(big_integer const &bb) {
     if (less_abs(*this, bb)) {
@@ -121,29 +130,26 @@ big_integer big_integer::div_(big_integer const &bb) {
     bool a_sign = sign;
     sign = false;
     b.sign = false;
+
     uint32_t f = radix / (b.digits.back() + 1);
     mul_little(f);
     b.mul_little(f);
+
     digits.push_back(0);
-    uint128_t b2 = b.digits.back() * radix + b.digits[b.digits.size() - 2];
+    uint128_t b2 = get(b, 2);
     big_integer rez;
-    size_t b_size = b.digits.size();
-    b.digits.insert(b.digits.begin(), digits.size() - b_size - 1, 0);
+
+    size_t prev_size = b.digits.size();
+    b.digits.insert(b.digits.begin(), digits.size() - prev_size - 1, 0);
+
     big_integer c;
-    size_t cou = b.digits.size();
-    while(cou >= b_size) {
-        size_t x = digits.size() - 1;
-        uint128_t a3 = digits[x];
-        a3<<=32;
-        a3 += digits[x-1];
-        a3<<=32;
-        a3 += digits[x-2];
+    for(size_t j = 0; j <= b.digits.size() - prev_size; j++) {
+        uint128_t a3 = get(*this, 3);
         uint32_t d = a3 / b2;
         d = std::min((uint32_t) d, UINT32_MAX);
-        size_t y = b.digits.size()-cou;
-        c.digits.resize(cou);
-        for (size_t i = b.digits.size() - cou; i < b.digits.size(); i++)
-            c.digits[i-y] = b.digits[i];
+        c.digits.resize(b.digits.size()-j);
+        for (size_t i = j; i < b.digits.size(); i++)
+            c.digits[i-j] = b.digits[i];
         c.mul_little(d);
         norm();
         if (less_abs(*this, c)) {
@@ -151,10 +157,9 @@ big_integer big_integer::div_(big_integer const &bb) {
             c.sub_(b);
         }
         rez.digits.push_back(d);
-        cou--;
         (*this).sub_(c);
-        if (digits.size() < cou + 1) {
-            digits.insert(digits.end(), cou - digits.size() + 1, 0);
+        if (digits.size() < b.digits.size() - j) {
+            digits.insert(digits.end(), b.digits.size() - digits.size() - j, 0);
         }
     }
     rez.sign = a_sign ^ bb.sign;
@@ -320,7 +325,7 @@ big_integer &big_integer::operator%=(big_integer const &rhs) {
     return *this;
 }
 
-big_integer &big_integer::operator&=(big_integer const &rhs) {
+big_integer& big_integer::bitwise(big_integer const &rhs, const std::function<uint32_t (uint32_t, uint32_t)>& f) {
     big_integer b(rhs);
     size_t mx = std::max(digits.size(), b.digits.size()) + 1;
     digits.resize(mx);
@@ -328,41 +333,23 @@ big_integer &big_integer::operator&=(big_integer const &rhs) {
     bitToTwo();
     b.bitToTwo();
     for(size_t i = 0; i < mx; i++) {
-        digits[i] = digits[i] & b.digits[i];
+        digits[i] = f(digits[i],b.digits[i]);
     }
     twoToBit();
     norm();
     return *this;
+}
+
+big_integer &big_integer::operator&=(big_integer const &rhs) {
+    return bitwise(rhs, [](uint32_t a, uint32_t b) { return a & b; });
 }
 
 big_integer &big_integer::operator|=(big_integer const &rhs) {
-    big_integer b(rhs);
-    size_t mx = std::max(digits.size(), b.digits.size()) + 1;
-    digits.resize(mx);
-    b.digits.resize(mx);
-    bitToTwo();
-    b.bitToTwo();
-    for(size_t i = 0; i < mx; i++) {
-        digits[i] = digits[i] | b.digits[i];
-    }
-    twoToBit();
-    norm();
-    return *this;
+    return bitwise(rhs, [](uint32_t a, uint32_t b) { return a | b; });
 }
 
 big_integer &big_integer::operator^=(big_integer const &rhs) {
-    big_integer b(rhs);
-    size_t mx = std::max(digits.size(), b.digits.size()) + 1;
-    digits.resize(mx);
-    b.digits.resize(mx);
-    bitToTwo();
-    b.bitToTwo();
-    for(size_t i = 0; i < mx; i++) {
-        digits[i] = digits[i] ^ b.digits[i];
-    }
-    twoToBit();
-    norm();
-    return *this;
+    return bitwise(rhs, [](uint32_t a, uint32_t b) { return a ^ b; });
 }
 
 // mul

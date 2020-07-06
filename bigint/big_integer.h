@@ -4,6 +4,9 @@
 #include <cstddef>
 #include <string>
 #include <vector>
+#include <functional>
+
+typedef unsigned __int128 uint128_t;
 
 struct big_integer
 {
@@ -56,8 +59,10 @@ private:
     void twoToBit();
     uint32_t div_little(uint32_t b);
     void mul_little(uint32_t b);
+    uint128_t get(big_integer const& a, size_t n);
     big_integer div_(big_integer const& b);
     void swap(big_integer& b);
+    big_integer& bitwise(big_integer const &rhs, const std::function<uint32_t (uint32_t, uint32_t)>& f);
 };
 
 big_integer operator+(big_integer a, big_integer const& b);     // ok
