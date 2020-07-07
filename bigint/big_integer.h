@@ -14,7 +14,6 @@ private:
 
     std::vector <uint32_t> digits;
     bool sign;
-    uint64_t radix = 4294967296; // 2^32
 
 public:
     big_integer();                                          // ok
@@ -55,11 +54,12 @@ private:
     friend bool less_abs(big_integer const& a, big_integer const& b);
     void norm();
     void sub_(big_integer const &b);
-    void bitToTwo();
-    void twoToBit();
+    void bit_to_two();
+    void two_to_bit();
     uint32_t div_little(uint32_t b);
     void mul_little(uint32_t b);
-    uint128_t get(big_integer const& a, size_t n);
+    uint128_t get_prefix(big_integer const& a, size_t n);
+    void abs();
     big_integer div_(big_integer const& b);
     void swap(big_integer& b);
     big_integer& bitwise(big_integer const &rhs, const std::function<uint32_t (uint32_t, uint32_t)>& f);

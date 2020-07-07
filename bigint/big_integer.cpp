@@ -7,12 +7,17 @@
 
 typedef unsigned __int128 uint128_t;
 
+static const uint64_t radix = 4294967296;
+static const big_integer ZERO(0);
+
 int flags(big_integer const &a, big_integer const &b) {
     // '<' = 1;  '>' = -1; '==' 0;
-    if (a.sign && !b.sign)
+    if (a.sign && !b.sign) {
         return 1;
-    if (b.sign && !a.sign)
+    }
+    if (b.sign && !a.sign) {
         return -1;
+    }
     int ans = 0;
     if (a.digits.size() < b.digits.size()) {
         ans = 1;
@@ -33,7 +38,7 @@ int flags(big_integer const &a, big_integer const &b) {
     if (ans == 0)
         return ans;
     if (a.sign && b.sign)
-        return 0 - ans;
+        return - ans;
     return ans;
 }
 bool less_abs(big_integer const& a, big_integer const& b) {
@@ -53,14 +58,14 @@ bool less_abs(big_integer const& a, big_integer const& b) {
 }
 
 void big_integer::norm() {
-    while(digits.size() && digits.back() == 0)
+    while(digits.size() > 1 && digits.back() == 0)
         digits.pop_back();
-    if (digits.size() == 0)
+    if (digits.size() == 1 && digits[0] == 0)
         sign = false;
 }
 
 // переводит из бита под знак в дополнение до двух
-void big_integer::bitToTwo() {
+void big_integer::bit_to_two() {
     if (!sign)
         return;
     for(uint32_t &digit : digits) {
@@ -71,9 +76,9 @@ void big_integer::bitToTwo() {
 }
 
 // переводит из дополнения до двух в бит под знак
-void big_integer::twoToBit() {
+void big_integer::two_to_bit() {
     sign = false;
-    if ((digits.back() & 2147483648) != 2147483648)
+    if ((digits.back() & radix/2) != radix/2)
         return;
     (*this)--;
     for(uint32_t &digit : digits) {
@@ -98,13 +103,13 @@ void big_integer::mul_little(uint32_t b) {
     digits.push_back(0);
     uint64_t carry = 0;
     for(size_t i = 0; i < digits.size(); i++) {
-        uint64_t x = (uint64_t) digits[i] * b + carry;
+        uint64_t x = static_cast<uint64_t>(digits[i]) * b + carry;
         digits[i] = x % radix;
         carry = x / radix;
     }
     norm();
 }
-uint128_t big_integer::get(big_integer const& a, size_t n) {
+uint128_t big_integer::get_prefix(big_integer const& a, size_t n) {
     uint128_t x  = 0;
     for (size_t i = 0; i < n; i++) {
         x += a.digits[a.digits.size() - i -1];
@@ -113,6 +118,11 @@ uint128_t big_integer::get(big_integer const& a, size_t n) {
     x >>= 32;
     return x;
 }
+
+void big_integer::abs() {
+    sign = false;
+}
+
 // a = a % bb, return a / bb
 big_integer big_integer::div_(big_integer const &bb) {
     if (less_abs(*this, bb)) {
@@ -128,15 +138,15 @@ big_integer big_integer::div_(big_integer const &bb) {
     }
     big_integer b(bb);
     bool a_sign = sign;
-    sign = false;
-    b.sign = false;
+    abs();
+    b.abs();
 
     uint32_t f = radix / (b.digits.back() + 1);
     mul_little(f);
     b.mul_little(f);
 
     digits.push_back(0);
-    uint128_t b2 = get(b, 2);
+    uint128_t b2 = get_prefix(b, 2);
     big_integer rez;
 
     size_t prev_size = b.digits.size();
@@ -144,12 +154,15 @@ big_integer big_integer::div_(big_integer const &bb) {
 
     big_integer c;
     for(size_t j = 0; j <= b.digits.size() - prev_size; j++) {
-        uint128_t a3 = get(*this, 3);
+
+        uint128_t a3 = get_prefix(*this, 3);
         uint32_t d = a3 / b2;
-        d = std::min((uint32_t) d, UINT32_MAX);
+        d = std::min(static_cast<uint32_t>(d), UINT32_MAX);
+
         c.digits.resize(b.digits.size()-j);
         for (size_t i = j; i < b.digits.size(); i++)
             c.digits[i-j] = b.digits[i];
+
         c.mul_little(d);
         norm();
         if (less_abs(*this, c)) {
@@ -172,25 +185,23 @@ big_integer big_integer::div_(big_integer const &bb) {
 
 big_integer::big_integer()
         : sign(false) {
+    digits.push_back(0);
 }
 
 big_integer::big_integer(big_integer const &other)
-        : sign(other.sign), digits(other.digits) {
+        :sign(other.sign), digits(other.digits) {
+    norm();
 }
 
-big_integer::big_integer(int a)
-        : big_integer() {
+big_integer::big_integer(int a) {
+    sign = false;
     if (a < 0)
         sign = true;
-    if (a == 0)
-        return;
-    long b = a;
-    b = std::abs(b);
-    digits.push_back(b);
+    digits.push_back(std::abs(static_cast<int64_t>(a)));
 }
 
-big_integer::big_integer(uint32_t a)
-        : big_integer() {
+big_integer::big_integer(uint32_t a) {
+    sign = false;
     digits.push_back(a);
 }
 
@@ -209,10 +220,11 @@ big_integer::big_integer(const std::string &str)
         size_t j = i;
         uint32_t x = 0;
         uint32_t st10 = 1;
+        const uint32_t new_radix = 10;
         while(j - i < 9 && j < str.size()) {
-            x = x * 10 + (str[j] - '0');
+            x = x * new_radix + (str[j] - '0');
             j++;
-            st10 *= 10;
+            st10 *= new_radix;
         }
         i = j - 1;
         mul_little(st10);
@@ -225,17 +237,18 @@ big_integer::big_integer(const std::string &str)
 big_integer &big_integer::operator=(big_integer const &other) {
     big_integer res(other);
     swap(res);
+    norm();
     return *this;
 }
 
 void big_integer::sub_(big_integer const &b) {
-    long long borrow = 0;
+    int64_t borrow = 0;
     for(size_t i = 0; i < digits.size(); i++) {
-        long long b_dig = 0;
+        int64_t b_dig = 0;
         if (i < b.digits.size()) {
             b_dig = b.digits[i];
         }
-        if ((long long) digits[i] >= b_dig + borrow) {
+        if (static_cast<int64_t>(digits[i]) >= b_dig + borrow) {
             digits[i] = digits[i] - b_dig - borrow;
             borrow = 0;
         } else {
@@ -255,16 +268,16 @@ big_integer &big_integer::operator+=(big_integer const &rhs) {
         }
         b.digits.resize(mx);
         digits.resize(mx);
-        long long borrow = 0;
+        int64_t borrow = 0;
         sub_(b);
     } else {
         digits.resize(mx);
-        long long carry = 0;
+        int64_t carry = 0;
         for(size_t i = 0; i < mx; i++) {
-            long long b = 0;
+            int64_t b = 0;
             if (i < rhs.digits.size())
                 b = rhs.digits[i];
-            long long x = (long long) digits[i] + (long long) b + carry;
+            int64_t x = static_cast<int64_t>(digits[i]) + static_cast<int64_t>(b) + carry;
             digits[i] = x % radix;
             carry = x / radix;
         }
@@ -279,8 +292,8 @@ big_integer &big_integer::operator-=(big_integer const &rhs) {
 }
 
 big_integer &big_integer::operator*=(big_integer const &rhs) {
-    if (rhs.digits.empty() || digits.empty()) {
-        *this = rhs;
+    if (rhs == ZERO || *this == ZERO) {
+        *this = ZERO;
         return *this;
     }
     if (rhs.digits.size() == 1) {
@@ -330,12 +343,12 @@ big_integer& big_integer::bitwise(big_integer const &rhs, const std::function<ui
     size_t mx = std::max(digits.size(), b.digits.size()) + 1;
     digits.resize(mx);
     b.digits.resize(mx);
-    bitToTwo();
-    b.bitToTwo();
+    bit_to_two();
+    b.bit_to_two();
     for(size_t i = 0; i < mx; i++) {
         digits[i] = f(digits[i],b.digits[i]);
     }
-    twoToBit();
+    two_to_bit();
     norm();
     return *this;
 }
@@ -370,7 +383,7 @@ big_integer &big_integer::operator>>=(int rhs) {
     uint32_t e = 1;
     e <<= rhs;
     (*this) /= e;
-    if (sign && (*this) % e != 0) {
+    if (sign && (*this) % e != ZERO) {
         (*this)--;
     }
     return *this;
@@ -412,13 +425,13 @@ big_integer big_integer::operator--(int) {
 }
 
 std::string to_string(big_integer const &a) {
-    if (a.digits.empty()) {
+    if (a == ZERO) {
         return "0";
     }
     std::string s;
     big_integer b(a);
     b.sign = false;
-    while(!b.digits.empty()) {
+    while(b != ZERO) {
         uint32_t rem = b.div_little(1000000000);
         std::string y = std::to_string(rem);
         reverse(y.begin(), y.end());
