@@ -53,7 +53,8 @@ private:
     friend int flags(big_integer const& a, big_integer const& b);
     friend bool less_abs(big_integer const& a, big_integer const& b);
     void norm();
-    void sub_(big_integer const &b);
+    void sub_positive(big_integer const &b);
+    void add_positive(big_integer const &b);
     void bit_to_two();
     void two_to_bit();
     uint32_t div_little(uint32_t b);
