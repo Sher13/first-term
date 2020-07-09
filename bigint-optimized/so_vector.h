@@ -103,12 +103,8 @@ public:
 
     void insert_begin(size_t n, const uint32_t &val) {
         if (is_small && size_sm + n <= SIZE) {
-            for(size_t i = size_sm; i < size_sm + n; i++) {
-                small[i] = val;
-            }
-            for(size_t i = size_sm; i > 0; i--) {
-                std::swap(small[i + n - 1], small[i - 1]);
-            }
+            std::fill(small+size_sm, small+size_sm+n, val);
+            std::rotate(small, small+size_sm, small + size_sm + n);
             size_sm += n;
             return;
         }
@@ -120,9 +116,7 @@ public:
 
     void insert_end(size_t n, const uint32_t &val) {
         if (is_small && size_sm + n <= SIZE) {
-            for(size_t i = size_sm; i < size_sm + n; i++) {
-                small[i] = val;
-            }
+            std::fill(small+size_sm, small+size_sm+n, val);
             size_sm += n;
             return;
         }
@@ -180,14 +174,14 @@ private:
 
     std::vector<uint32_t> &take() {
         if (big->is_one()) {
-            return big->data();
+            return big->data_;
         }
         big->dec();
-        big = new cow_vector(big->data());
-        return big->data();
+        big = new cow_vector(big->data_);
+        return big->data_;
     }
 
     std::vector<uint32_t> &take() const {
-        return big->data();
+        return big->data_;
     }
 };

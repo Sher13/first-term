@@ -3,10 +3,11 @@
 
 struct cow_vector {
 private:
-    std::vector<uint32_t> data_;
     size_t counter;
 
 public:
+
+    std::vector<uint32_t> data_;
 
     cow_vector()
             : counter(1) {};
@@ -35,11 +36,6 @@ public:
     bool is_one() {
         return counter == 1;
     };
-
-    std::vector<uint32_t> &data() {
-        return data_;
-    }
-
 
     void swap(cow_vector &a, cow_vector &b) {
         using std::swap;
