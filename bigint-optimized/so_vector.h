@@ -128,9 +128,7 @@ public:
 
     void erase_begin(size_t n) {
         if (is_small) {
-            for(size_t i = 0; i < n; i++) {
-                small[i] = small[i + n];
-            }
+            std::copy(small+n, small+size_sm, small);
             return;
         }
         take().erase(take().begin(), take().begin() + n);
