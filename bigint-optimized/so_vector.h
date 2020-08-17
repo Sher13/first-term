@@ -42,10 +42,16 @@ public:
 
     ~so_vector() {
         if (!is_small) {
-            big->dec();
-            if (big->is_zero()) {
+            del();
+        }
+    }
+
+    void del() {
+        if (!is_small) {
+            if (big->is_one()) {
                 delete big;
             }
+            big->dec();
         }
     }
 
@@ -167,7 +173,6 @@ public:
         std::swap(is_small, b.is_small);
         std::swap(small, b.small);
         std::swap(size_sm, b.size_sm);
-        //std::swap(big, b.big);
     }
 
 private:
@@ -182,15 +187,13 @@ private:
         }
         is_small = false;
     };
+
     void big_to_small() {
         std::vector<uint32_t> copy(take());
         for(size_t i = 0; i < SIZE; i++) {
             copy[i] = take()[i];
         }
-        big->dec();
-        if (big->is_zero()) {
-            delete big;
-        }
+        del();
         for(size_t i = 0; i < SIZE; i++) {
             small[i] = copy[i];
         }
@@ -198,7 +201,7 @@ private:
 
     }
 
-    std::vector<uint32_t>& take() {
+    std::vector<uint32_t> &take() {
         if (big->is_one()) {
             return big->data();
         }
@@ -207,7 +210,7 @@ private:
         return big->data();
     }
 
-    std::vector<uint32_t>& take() const {
+    std::vector<uint32_t> &take() const {
         return big->data();
     }
 };
